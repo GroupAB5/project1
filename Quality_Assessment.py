@@ -167,4 +167,4 @@ if __name__ == "__main__":
 # corr = [(1, 2, 0.1),
 #         (2, 3, -0.3),
 #         (3, 1, 0.8)] # correlation between XY, YZ, XZ (this variable structure should be implemented for this to work)
-#>>>>>>> 99b22c7eea3cbf5a1b484adef271daa7df874d8b
+#x>>>>>>> 99b22c7eea3cbf5a1b484adef271daa7df874d8b
