@@ -36,6 +36,8 @@ def getCoord(f):
 
     return coordinates, stations, date
 
+#This is no longer needed for the project because all the files are already rewritten
+'''
 files = []
 xval = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '99']
 for x in xval:
@@ -87,4 +89,5 @@ def addToFiles():
                 f.write(date + '\t' + str(coordinates[j][0]) + '\t' + str(coordinates[j][1]) + '\t' + str(
                     coordinates[j][2]) + '\n')
                 f.close()
-#addToFiles()
+addToFiles()
+'''
