@@ -5,6 +5,9 @@ import os
 from matplotlib import style
 from datetime import *
 from ConversionXYZ2NEU import rotation
+import rewriteFiles as rf
+from mpl_toolkits.basemap import Basemap
+from ConversionXYZ2NEU import latlongheight
 
 # returns a list with dates
 def get_dates(file_loc):
@@ -117,4 +120,45 @@ def plot():
     plt.ylabel('displacement[meters/day]')
     plt.show()
 
-plot()
+#plot()
+
+def visualize():
+    # Set basemap
+    m = Basemap(width=12000000, height=9000000, projection='moll',
+                resolution='c', lat_1=45., lat_2=55, lat_0=50, lon_0=-107.)
+    m.drawmapboundary(fill_color='aqua')
+    m.fillcontinents(color='#cc9955', lake_color='aqua', zorder=0)
+    m.drawcoastlines(color='0.15')
+
+
+    dir = 'C:/Users/adask/Desktop/TUDelft/Test, analysis and simulation/data/converted_data/' #Change it to your directory
+
+    files = []
+    for file in os.listdir(dir):
+        files.append(file)
+
+    for i in range(len(files)):
+        coordinates = np.loadtxt(str(dir + files[i]), comments='%', usecols=(1, 2, 3))
+
+        stat_x = coordinates[:, 0]
+        stat_y = coordinates[:, 1]
+        stat_z = coordinates[:, 2]
+
+
+        coord_transformed = [(latlongheight(stat_x[i], stat_y[i], stat_z[i])) for i in range(len(stat_x))]
+        map_data = np.array(coord_transformed)
+
+        lat = map_data[:, 1]  # latitude
+        lon = map_data[:, 2]  # longitude
+
+        # convert to map coordinates
+        xpt, ypt = m(lon, lat)
+        plt.plot(xpt, ypt, 'b')
+
+        u = xpt[-1] - xpt[0]
+        v = ypt[-1] - ypt[0]
+        m.quiver(xpt[0], ypt[0], u, v, color='r')
+
+    plt.show()
+
+visualize()
