@@ -1,6 +1,5 @@
 """script will go from ecef(xyz) to enu
-for both the coordinates as the covariance matrix.
-25dec 2004 will be set as zero for now"""
+"""
 
 
 import numpy as np
