@@ -5,7 +5,6 @@ import os
 from matplotlib import style
 from datetime import *
 from ConversionXYZ2NEU import rotation
-import rewriteFiles as rf
 from mpl_toolkits.basemap import Basemap
 from ConversionXYZ2NEU import latlongheight
 
@@ -122,11 +121,13 @@ def plot():
 
 #plot()
 
-def visualize():
+def visualize(d1, d2):
     # Set basemap
-    m = Basemap(width=12000000, height=9000000, projection='moll',
-                resolution='c', lat_1=45., lat_2=55, lat_0=50, lon_0=-107.)
-    m.drawmapboundary(fill_color='aqua')
+    #m = Basemap(width=12000000, height=9000000, projection='moll',
+     #           resolution='c', lat_1=45., lat_2=55, lat_0=50, lon_0=-107.)
+    m = Basemap(projection='merc', lat_0=2.21797, lon_0=115.69283, resolution='c', area_thresh=1000,
+                llcrnrlon=85, llcrnrlat=-20, urcrnrlon=165, urcrnrlat=30)
+    #m.drawmapboundary(fill_color='aqua')
     m.fillcontinents(color='#cc9955', lake_color='aqua', zorder=0)
     m.drawcoastlines(color='0.15')
 
@@ -144,21 +145,39 @@ def visualize():
         stat_y = coordinates[:, 1]
         stat_z = coordinates[:, 2]
 
+        dates = get_dates(str(dir + files[i]))
 
-        coord_transformed = [(latlongheight(stat_x[i], stat_y[i], stat_z[i])) for i in range(len(stat_x))]
-        map_data = np.array(coord_transformed)
+        index = []
+        for i in range(len(dates)):
+            if(N_days(dates[i], d1) <= 0 and N_days(dates[i], d2) >= 0):
+                index.append(i)
 
-        lat = map_data[:, 1]  # latitude
-        lon = map_data[:, 2]  # longitude
+        print(index)
 
-        # convert to map coordinates
-        xpt, ypt = m(lon, lat)
-        plt.plot(xpt, ypt, 'b')
+        if not(len(index) == 0):
+            stat_x = [stat_x[j] for j in index]
+            stat_y = [stat_y[j] for j in index]
+            stat_z = [stat_z[j] for j in index]
 
-        u = xpt[-1] - xpt[0]
-        v = ypt[-1] - ypt[0]
-        m.quiver(xpt[0], ypt[0], u, v, color='r')
+            coord_transformed = [(latlongheight(stat_x[i], stat_y[i], stat_z[i])) for i in range(len(stat_x))]
+            map_data = np.array(coord_transformed)
+
+            lat = map_data[:, 1]  # latitude
+            lon = map_data[:, 2]  # longitude
+
+            # convert to map coordinates
+            xpt, ypt = m(lon, lat)
+            plt.plot(xpt, ypt, '->')
+
+            u = xpt[-1] - xpt[0]
+            v = ypt[-1] - ypt[0]
+
+            #dtot = np.sqrt(u**2  + v**2)
+            #plt.text(xpt[0], ypt[0], str(np.round(dtot, 4)) + 'm')
+
+            m.quiver(xpt[0], ypt[0], u, v, color='r')
 
     plt.show()
 
-visualize()
+#visualize('00Jan20', '02Feb25')     #Change dates here to plot displacement over some period of time
+#print(N_days('00Jan20', '00Jan18'))
