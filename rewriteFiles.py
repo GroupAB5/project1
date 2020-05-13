@@ -3,6 +3,9 @@ This file rewrites the gps data files
 '''
 
 import numpy as np
+import os
+from displacement import get_dates, N_days
+from datetime import *
 
 #this method reads coordinate data from gipsy files
 def getCoord(f):
@@ -37,18 +40,10 @@ def getCoord(f):
     return coordinates, stations, date
 
 #This is no longer needed for the project because all the files are already rewritten
-'''
 files = []
-xval = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '99']
-for x in xval:
-    for i in range(1, 126):
-        if i < 10:
-            k = 'PZITRF0800' + str(i) + '.' + x + 'X'
-        elif i < 100:
-            k = 'PZITRF080' + str(i) + '.' + x + 'X'
-        else:
-            k = 'PZITRF08' + str(i) + '.' + x + 'X'
-        files.append(k)
+dir = 'gps_data'
+for file in os.listdir(dir):
+    files.append(file)
 
 
 def rewrite():
@@ -65,18 +60,17 @@ def rewrite():
 
 #rewrite()
 
-import os
-file_content = []
-dir = 'C:/Users/adask/Desktop/TUDelft/Test, analysis and simulation/program/converted_data'
-for file in os.listdir(dir):
-    file_content.append(file)
-
 def addToFiles():
 
     for i in range(1, len(files)):
         coordinates, stations, date = getCoord('gps_data/'+files[i])
 
         for j in range(len(stations)):
+            file_content = []
+            dir = 'converted_data'
+            for file in os.listdir(dir):
+                file_content.append(file)
+
             if stations[j] in file_content:
                 f = open('converted_data/'+stations[j], 'a')
                 f.write(date + '\t' + str(coordinates[j][0]) + '\t' + str(coordinates[j][1]) + '\t' + str(
@@ -89,5 +83,34 @@ def addToFiles():
                 f.write(date + '\t' + str(coordinates[j][0]) + '\t' + str(coordinates[j][1]) + '\t' + str(
                     coordinates[j][2]) + '\n')
                 f.close()
-addToFiles()
-'''
+#addToFiles()
+
+def rewrite2():
+    file_content = []
+    dir = 'converted_data'
+    for file in os.listdir(dir):
+        file_content.append(file)
+
+    for file in file_content:
+        f = open(str('converted_data/'+file), 'r')
+        l = f.readlines()
+        f.close()
+
+        a = np.loadtxt(str('converted_data/'+file), comments='%', usecols=(1, 2, 3))
+        x, y, z = a[:, 0], a[:, 1], a[:,2]
+
+        dates = get_dates(str('converted_data/'+file))
+        dates.sort(key=lambda date: datetime.strptime(date, '%y%b%d'))
+
+        f = open('C:/Users/adask/Desktop/TUDelft/Test, analysis and simulation/data/converted_data/'+file, 'w')
+        f.write(l[0])
+        f.write(l[1])
+        for d in dates:
+            for i in range(2, len(l)):
+                if d == l[i].split()[0]:
+                    f.write(l[i])
+                    continue
+
+        f.close()
+
+#rewrite2()
