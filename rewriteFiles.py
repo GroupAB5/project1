@@ -58,8 +58,8 @@ def rewrite():
 
         file.close()
 
-#rewrite()
-
+#this method adds the rest of the data to the existing files and
+#if they do not exist, it creates new files
 def addToFiles():
 
     for i in range(1, len(files)):
@@ -83,8 +83,9 @@ def addToFiles():
                 f.write(date + '\t' + str(coordinates[j][0]) + '\t' + str(coordinates[j][1]) + '\t' + str(
                     coordinates[j][2]) + '\n')
                 f.close()
-#addToFiles()
 
+#this method rewrites all the the files which are sorted by station,
+#by sorting these files by dates
 def rewrite2():
     file_content = []
     dir = 'converted_data'
@@ -113,4 +114,6 @@ def rewrite2():
 
         f.close()
 
-#rewrite2()
+rewrite()
+addToFiles()
+rewrite2()
