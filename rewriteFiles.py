@@ -39,13 +39,12 @@ def getCoord(f):
 
     return coordinates, stations, date
 
-#This is no longer needed for the project because all the files are already rewritten
 files = []
 dir = 'gps_data'
 for file in os.listdir(dir):
     files.append(file)
 
-
+#this method write the first re-written files based on the first gps data file
 def rewrite():
     coordinates, stations, date = getCoord('gps_data/'+files[0])
 
