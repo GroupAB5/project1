@@ -96,9 +96,9 @@ def plot():
     for file in os.listdir(dir):
         files.append(file)
 
-    a = np.loadtxt(str(dir + files[0]), comments='%', usecols=(1, 2, 3))
+    a = np.loadtxt(str(dir + files[53]), comments='%', usecols=(1, 2, 3))
 
-    date = get_dates(dir+files[0])
+    date = get_dates(dir+files[53])
 
     #xr, yr, zr = displacement_rate(date, a)
     xr, yr, zr = displacement_rate_NEU(date, a)
@@ -107,14 +107,53 @@ def plot():
     date = date[0:len(date) - 1]
     x = [datetime.strptime(d, '%y%b%d').date() for d in date]
 
+    Data_quake = datetime(2004, 12, 26) in x
+    if Data_quake:
+        split = x.index(datetime(2004, 12, 26)) + 1  # +1 as to include 26 in pre earthquake
+        print('date of earth quake is included')
+    else:
+        i = 0
+        lst = []
+        for day in date:
+            if day.startswith("04DEC27" or "04DEC28" or "04DEC29" or "04DEC30" or "04DEC31"):
+                lst.append([day, i])
+            i += 1
+        if not lst:  # checking if list is empty
+            i = 0
+            lst = []
+            for day in date:
+                if day.startswith("05" or "06" or "07" or "08" or "09" or "10" or "11" or "12" or "13" or "14"):
+                    lst.append([day, i])
+                i += 1
+        split = lst[0][1]
+        print("date of earthquake is not present data is split on :", lst[0][0])
+
     ax = plt.gca()
     formatter = mdates.DateFormatter("%y-%m-%d")
     ax.xaxis.set_major_formatter(formatter)
     locator = mdates.AutoDateLocator()
     ax.xaxis.set_major_locator(locator)
-    plt.plot(x, xr, label='East')
-    plt.plot(x, yr, label='North')
-    plt.plot(x, zr, label='Up')
+    plt.plot(x[0:split], xr[0:split], 'bo', label='East')
+    plt.plot(x[split:-1], xr[split:-1], 'bo')
+
+    x1 = x[0:split-1]
+    x2 = x[split-1:-1]
+
+    daycount1 = []
+    daycount2 = []
+    for day in x1:
+        daycount1.append((day - x1[0]).days)
+    for day in x2:
+        daycount2.append((day - x2[0]).days)
+
+    p1 = np.polyfit(daycount1, xr[:split-1], 7)
+    plt.plot(x1, np.polyval(p1, daycount1), 'r--', label='regression')
+
+    p2 = np.polyfit(daycount2, xr[split-1:-1], 7)
+    plt.plot(x2, np.polyval(p2, daycount2), 'r--')
+
+    #plt.plot(x, yr, label='North')
+    #plt.plot(x, zr, label='Up')
     plt.legend()
     plt.ylabel('displacement[meters/day]')
     plt.show()
@@ -159,7 +198,8 @@ def visualize(d1, d2):
             stat_y = [stat_y[j] for j in index]
             stat_z = [stat_z[j] for j in index]
 
-            coord_transformed = [(latlongheight(stat_x[i], stat_y[i], stat_z[i])) for i in range(len(stat_x))]
+            coord_transformed = [(latlongheight(stat_x[i], stat_y[i], stat_z[i]))
+                                 for i in range(len(stat_x))]
             map_data = np.array(coord_transformed)
 
             lat = map_data[:, 1]  # latitude
@@ -179,5 +219,5 @@ def visualize(d1, d2):
 
     plt.show()
 
-#visualize('00Jan20', '02Feb25')     #Change dates here to plot displacement over some period of time
-#print(N_days('00Jan20', '00Jan18'))
+#visualize('99Jan01', '00Jan01')     #Change dates here to plot displacement over some period of time
+plot()
