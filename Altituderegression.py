@@ -38,12 +38,20 @@ fullpath = os.path.join(directory,file)
 with open(fullpath,'rb')  as pickle_file:
     data = pickle.load(pickle_file)
 pickle_file.close()
-print(data)
-dates = Df["date"]
+ncolumns = int(len(data)/7)
+print(ncolumns)
+data = np.reshape(data,(ncolumns,7))
+
+Df = pd.DataFrame({'date': data[:, 0], 'N': data[:, 1], 'E':data[:,2], 'U':data[:,3],'sdN': data[:,4],'sdE':data[:,5], 'sdU':data[:,6]})
+print(Df.head())
+dates = Df['date']
 dateslist = [dt.datetime.strptime(d,'%y%b%d').date() for d in dates]
 daycount =[]
 for day in dateslist:
     daycount.append((day-dateslist[0]).days)
+
+y = Df['N']
+
 
 
 
