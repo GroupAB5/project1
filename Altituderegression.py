@@ -14,7 +14,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 import pickle
 import os
-
+from matplotlib.ticker import FormatStrFormatter
 # Importing conversion function
 from ConversionXYZ2NEU import  rotation
 
@@ -39,19 +39,27 @@ with open(fullpath,'rb')  as pickle_file:
     data = pickle.load(pickle_file)
 pickle_file.close()
 ncolumns = int(len(data)/7)
-print(ncolumns)
-data = np.reshape(data,(ncolumns,7))
 
+data = np.reshape(data,(ncolumns,7))
 Df = pd.DataFrame({'date': data[:, 0], 'N': data[:, 1], 'E':data[:,2], 'U':data[:,3],'sdN': data[:,4],'sdE':data[:,5], 'sdU':data[:,6]})
-print(Df.head())
+print(Df.head(), Df.tail())
 dates = Df['date']
 dateslist = [dt.datetime.strptime(d,'%y%b%d').date() for d in dates]
 daycount =[]
 for day in dateslist:
     daycount.append((day-dateslist[0]).days)
 
-y = Df['N']
+Df["indexdates"] = daycount
 
+Df['N'] = Df['N'].astype(float)
+Df['E'] = Df['E'].astype(float)
+Df['U'] = Df['U'].astype(float)
+Df['sdN'] = Df['U'].astype(float)
+Df['sdE'] = Df['U'].astype(float)
+Df['sdU'] = Df['U'].astype(float)
+
+y = Df['N'] #y axis to be plotted
+print(y)
 
 
 
@@ -115,14 +123,15 @@ Rsqpost    = modelpost.score(datespost,zpost)
 
 
 
-
 #plotting
-plt.scatter(indexeddates, y)
-abline(slope,b0,indexeddates,"red")
+
+Df.plot(kind='scatter',x= 'indexdates',y= 'N',color ='red')
 abline(slopepre,b0pre,datespre,"pink")
 abline(slopepost,b0post,datespost,"green")
 
 plt.show()
+
+
 
 
 
