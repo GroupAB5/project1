@@ -12,8 +12,13 @@ from sklearn.linear_model import LinearRegression
 import datetime as dt
 import matplotlib.dates as mdates
 import pandas as pd
+import pickle
+import os
 
+# Importing conversion function
+from ConversionXYZ2NEU import  rotation
 
+#linear plotter
 def abline(slope, intercept, x_vals, color):
     """Plot a line from slope and intercept"""
     axes = plt.gca()
@@ -22,20 +27,29 @@ def abline(slope, intercept, x_vals, color):
 
 
 
-#file to be plotted needs to be in the same folder
-file = "ALGO"
-
+#file to be plotted (needs to be in the same folder)
 #pandas Dataframe
-Df = pd.read_csv(file , delim_whitespace=True, comment = '%',header=None)
-Df.columns = ["date", "x", "y", "z"]
+#Df = pd.read_csv(file , delim_whitespace=True, comment = '%',header=None)
+#Df.columns = ["date", "x", "y", "z"]
 
+file = r"ALGO.txt"
+directory = r'C:\Users\JdeBo\Desktop\Q4 2019-2020\2020-Q3-project\NEU'
+fullpath = os.path.join(directory,file)
+with open(fullpath,'rb')  as pickle_file:
+    data = pickle.load(pickle_file)
+pickle_file.close()
+print(data)
 dates = Df["date"]
-y = pd.DataFrame(Df['z']).to_numpy()
 dateslist = [dt.datetime.strptime(d,'%y%b%d').date() for d in dates]
-
 daycount =[]
 for day in dateslist:
     daycount.append((day-dateslist[0]).days)
+
+
+
+
+
+
 
 
 
