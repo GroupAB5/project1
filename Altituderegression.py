@@ -2,7 +2,6 @@
 It will also plot three different linear regressions one red line over the complete data one line pink using
 data points from before the 2004 earthquake and one green using data points post earthquake
 To plot linear regression from a different file change the file name
-
 Note the x-axis numbers show the days counted from the first date in the file"""
 
 import numpy as np
@@ -59,14 +58,6 @@ Df['sdE'] = Df['U'].astype(float)
 Df['sdU'] = Df['U'].astype(float)
 
 y = Df['N'] #y axis to be plotted
-print(y)
-
-
-
-
-
-
-
 
 
 
@@ -80,14 +71,16 @@ else:
     i = 0
     lst =[]
     for day in dates:
-        if day.startswith("04DEC27" or "04DEC28" or "04DEC29" or "04DEC30" or "04DEC31"):
+        if day.startswith("04DEC27" ) or day.startswith("04DEC28"  ) or day.startswith("04DEC29") or day.startswith("04DEC30") or day.startswith("04DEC31"):
             lst.append([day,i])
         i+=1
     if  not lst:                                                                              #checking if list is empty
         i = 0
         lst = []
         for day in dates:
-            if day.startswith("05" or "06" or "07" or "08" or "09" or "10" or "11" or "12" or "13" or "14" ):
+            if day.startswith("05") or day.startswith("06") or day.startswith("07") or day.startswith("08") \
+                    or day.startswith("09") or day.startswith("10") or day.startswith("11") or day.startswith("12") \
+                    or day.startswith("13") or day.startswith("14") :
                 lst.append([day,i])
             i += 1
     split = lst[0][1]
@@ -122,7 +115,6 @@ Rsqpre     = modelpre.score(datespre,zpre)
 Rsqpost    = modelpost.score(datespost,zpost)
 
 
-
 #plotting
 
 Df.plot(kind='scatter',x= 'indexdates',y= 'N',color ='red')
@@ -130,9 +122,3 @@ abline(slopepre,b0pre,datespre,"pink")
 abline(slopepost,b0post,datespost,"green")
 
 plt.show()
-
-
-
-
-
-
