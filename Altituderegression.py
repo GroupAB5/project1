@@ -58,6 +58,14 @@ Df['sdE'] = Df['U'].astype(float)
 Df['sdU'] = Df['U'].astype(float)
 
 y = Df['N'] #y axis to be plotted
+print(y)
+
+
+
+
+
+
+
 
 
 
@@ -114,11 +122,17 @@ slopepost  = modelpost.coef_
 Rsqpre     = modelpre.score(datespre,zpre)
 Rsqpost    = modelpost.score(datespost,zpost)
 
+#polynomial interpolation
+zpost = np.array(zpost)
+p = np.polyfit(daycount[split+1:], zpost, 10)
+
 
 #plotting
 
 Df.plot(kind='scatter',x= 'indexdates',y= 'N',color ='red')
 abline(slopepre,b0pre,datespre,"pink")
-abline(slopepost,b0post,datespost,"green")
+#abline(slopepost,b0post,datespost,"green")
+
+plt.plot(daycount[split+1:], np.polyval(p, daycount[split+1:]), 'b--', label='regression')
 
 plt.show()
