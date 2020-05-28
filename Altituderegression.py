@@ -13,16 +13,19 @@ import matplotlib.dates as mdates
 import pandas as pd
 import pickle
 import os
+
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from matplotlib.ticker import FormatStrFormatter
 # Importing conversion function
 from ConversionXYZ2NEU import  rotation
 
 #linear plotter
-def abline(slope, intercept, x_vals, color):
+def abline(slope, intercept, indexdates, datetimedates,color,ax):
     """Plot a line from slope and intercept"""
     axes = plt.gca()
-    y_vals = intercept + slope * x_vals
-    plt.plot(x_vals, y_vals, '--',color =color)
+    y_vals = intercept + slope * indexdates
+    ax.plot(datetimedates, y_vals, '--',color =color)
 
 
 
@@ -31,7 +34,7 @@ def abline(slope, intercept, x_vals, color):
 #Df = pd.read_csv(file , delim_whitespace=True, comment = '%',header=None)
 #Df.columns = ["date", "x", "y", "z"]
 
-file = r"ALGO.txt"
+file = r"PHKT.txt"
 directory = r'C:\Users\JdeBo\Desktop\Q4 2019-2020\2020-Q3-project\NEU'
 fullpath = os.path.join(directory,file)
 with open(fullpath,'rb')  as pickle_file:
@@ -41,7 +44,6 @@ ncolumns = int(len(data)/7)
 
 data = np.reshape(data,(ncolumns,7))
 Df = pd.DataFrame({'date': data[:, 0], 'N': data[:, 1], 'E':data[:,2], 'U':data[:,3],'sdN': data[:,4],'sdE':data[:,5], 'sdU':data[:,6]})
-print(Df.head(), Df.tail())
 dates = Df['date']
 dateslist = [dt.datetime.strptime(d,'%y%b%d').date() for d in dates]
 daycount =[]
@@ -49,6 +51,10 @@ for day in dateslist:
     daycount.append((day-dateslist[0]).days)
 
 Df["indexdates"] = daycount
+Df.index = pd.to_datetime(Df['date'],format = '%y%b%d')
+Df.drop(columns = ['date'], inplace = True)
+
+
 
 Df['N'] = Df['N'].astype(float)
 Df['E'] = Df['E'].astype(float)
@@ -57,17 +63,8 @@ Df['sdN'] = Df['U'].astype(float)
 Df['sdE'] = Df['U'].astype(float)
 Df['sdU'] = Df['U'].astype(float)
 
-y = Df['N'] #y axis to be plotted
-print(y)
-
-
-
-
-
-
-
-
-
+N = Df['N'] #y axis to be plotted
+E = Df['E']
 
 
 #Choosing the date to split the data On due to assumed discontinuity at earthquake
@@ -98,41 +95,66 @@ else:
 
 #linear regression over all dates with dates as input z valuies as output
 indexeddates = np.array(daycount).reshape(-1,1) #using indexes instead of actual dates.]
-model        = LinearRegression().fit(indexeddates,y)
-Rsq          = model.score(indexeddates,y)
-b0           = model.intercept_
-slope        = model.coef_
+
 
 # Linear regression assuming discontinuity
-datespre   = indexeddates[0:split]
-datespost  = indexeddates[split:-1]
+datespre   = indexeddates[0:split+1]
+datespost  = indexeddates[split+1:]
+print(datespre,datespost)
 
-zpre       = y[0:split]
-zpost      = y[split:-1]
+Npre       = N[0:split+1]
+Npost      = N[split+1:]
+Epre       = E[0:split+1]
+Epost      = E[split+1:]
 
-modelpre   = LinearRegression().fit(datespre,zpre)
-modelpost  = LinearRegression().fit(datespost,zpost)
 
-b0pre      = modelpre.intercept_
-b0post     = modelpost.intercept_
+Nmodelpre   = LinearRegression().fit(datespre,Npre)
+Emodelpre   = LinearRegression().fit(datespre,Epre)
 
-slopepre   = modelpre.coef_
-slopepost  = modelpost.coef_
 
-Rsqpre     = modelpre.score(datespre,zpre)
-Rsqpost    = modelpost.score(datespost,zpost)
+Nb0pre      = Nmodelpre.intercept_
+Nslopepre   = Nmodelpre.coef_
+Eb0pre      = Emodelpre.intercept_
+Eslopepre   = Emodelpre.coef_
+
+NRsqpre     = Nmodelpre.score(datespre,Npre)
+ERsqpre     = Emodelpre.score(datespre,Epre)
+
 
 #polynomial interpolation
-zpost = np.array(zpost)
-p = np.polyfit(daycount[split+1:], zpost, 10)
+Npost = np.array(Npost)
+Epost = np.array(Epost)
+p1 = np.polyfit(daycount[split+1:], Npost, 10)
+p2 = np.polyfit(daycount[split+1:], Epost, 10)
+
+#interger to datetime coverting
+xpre =[]
+xpost =[]
+for day in datespre:
+    date = dateslist[0]+dt.timedelta(days=day[0].item())
+    xpre.append(date)
+for day in datespost:
+    date = dateslist[0]+dt.timedelta(days=day[0].item())
+    xpost.append(date)
 
 
 #plotting
+fig, axes = plt.subplots(nrows=3, ncols=1,sharex = True)
 
-Df.plot(kind='scatter',x= 'indexdates',y= 'N',color ='red')
-abline(slopepre,b0pre,datespre,"pink")
-#abline(slopepost,b0post,datespost,"green")
 
-plt.plot(daycount[split+1:], np.polyval(p, daycount[split+1:]), 'b--', label='regression')
 
+Df['N'].plot(marker='.', alpha=0.5, linestyle='None', figsize=(11, 9),color = 'red',grid = True, ax = axes[0])
+Df['E'].plot(marker='.', alpha=0.5, linestyle='None', figsize=(11, 9),color = 'black',grid = True,ax = axes[1])
+Df['U'].plot(marker='.', alpha=0.5, linestyle='None', figsize=(11, 9),color = 'blue',grid = True,ax = axes[2])
+
+axes[0].set_ylabel('North mm')
+axes[1].set_ylabel('East mm')
+axes[2].set_ylabel('Up mm')
+
+abline(Nslopepre,Nb0pre,datespre,xpre,"pink",axes[0])
+abline(Eslopepre,Eb0pre,datespre,xpre,"pink",axes[1])
+
+
+axes[0].plot(xpost, np.polyval(p1, daycount[split+1:]), 'b--', label='regression')
+axes[1].plot(xpost, np.polyval(p2, daycount[split+1:]), 'b--', label='regression')
 plt.show()
