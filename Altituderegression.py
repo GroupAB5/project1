@@ -4,18 +4,12 @@ data points from before the 2004 earthquake and one green using data points post
 To plot linear regression from a different file change the file name
 Note the x-axis numbers show the days counted from the first date in the file"""
 
-"""This Script plots data points in from  files converted by adam
-It will also plot three different linear regressions one red line over the complete data one line pink using
-data points from before the 2004 earthquake and one green using data points post earthquake
-To plot linear regression from a different file change the file name
-Note the x-axis numbers show the days counted from the first date in the file"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import style
 from sklearn.linear_model import LinearRegression
-from scipy.optimize import curve_fit
+from scipy.optimize import newton,bisect
 import datetime as dt
 import matplotlib.dates as mdates
 import pandas as pd
@@ -111,24 +105,62 @@ def timeseries(filename, mode="show"):
     Epost      = E[split:]
 
 
-    Nmodelpre   = LinearRegression().fit(datespre,Npre)
-    Emodelpre   = LinearRegression().fit(datespre,Epre)
-
-
-    Nb0pre      = Nmodelpre.intercept_
-    Nslopepre   = Nmodelpre.coef_
-    Eb0pre      = Emodelpre.intercept_
-    Eslopepre   = Emodelpre.coef_
-
-    NRsqpre     = Nmodelpre.score(datespre,Npre)
-    ERsqpre     = Emodelpre.score(datespre,Epre)
-
-
-    #polynomial interpolation
+    #polynomial regression
     Npost = np.array(Npost)
     Epost = np.array(Epost)
     p1 = np.polyfit(daycount[split:], Npost, 10)
     p2 = np.polyfit(daycount[split:], Epost, 10)
+
+    #derivatives
+    dNddate = np.polyder(p1)
+    dEddate = np.polyder(p2)
+    d2Nddate2 =np.polyder(dNddate)
+    d2Eddate2 =np.polyder(dEddate)
+
+    #solving when slope after earthquake becomes equal to before
+    if len(Npre)>1 :
+
+        Nmodelpre = LinearRegression().fit(datespre, Npre)
+        Emodelpre = LinearRegression().fit(datespre, Epre)
+
+        Nb0pre = Nmodelpre.intercept_
+        Nslopepre = Nmodelpre.coef_
+        Eb0pre = Emodelpre.intercept_
+        Eslopepre = Emodelpre.coef_
+
+        NRsqpre = Nmodelpre.score(datespre, Npre)
+        ERsqpre = Emodelpre.score(datespre, Epre)
+
+
+        def f(x):
+            return np.polyval(dNddate,x)-Nslopepre
+        def g(x):
+            return np.polyval(dEddate, x) - Eslopepre
+        def dfdx(x):
+            return np.polyval(d2Nddate2,x)
+        def dgdx(x):
+            return np.polyval(d2Eddate2,x)
+
+
+        # Northlinear = newton(f,x0 =2200,fprime =dfdx,maxiter = 1000)
+        # Eastlinear = newton(dgdx,x0= 2229, fprime=dgdx, maxiter=1000)
+        try:
+            Northlinear = bisect(f,2100,10000, maxiter=10000)
+            Eastlinear = bisect(g,2000,10000,maxiter=10000)
+            print('''For {}, North has the same slope as before eartquake at day {}
+                    East has the same slope as before eartquake at day {}
+                    this comes down to the dates {} and {}'''.format(filename[0:4], Northlinear, Eastlinear,
+                                                                     dateslist[0] + dt.timedelta(
+                                                                         days=round(Northlinear)),
+                                                                     dateslist[0] + dt.timedelta(
+                                                                         days=round(Eastlinear))))
+        except:
+            print('For {}, bisection does not converge or f(a)*f(b) > 0 '.format(filename[0:4]))
+
+
+
+
+
 
     #interger to datetime coverting
     xpre =[]
@@ -168,9 +200,9 @@ def timeseries(filename, mode="show"):
     axs[2].set_ylabel('Up [m]')
     axs[2].xaxis.set_minor_locator(months)
     axs[2].ticklabel_format(axis='y', style='sci', scilimits=(-1,-2), useMathText=True)
-
-    abline(Nslopepre,Nb0pre,datespre,xpre,"blue",axs[0])
-    abline(Eslopepre,Eb0pre,datespre,xpre,"darkviolet",axs[1])
+    if len(Npre)>1 :
+        abline(Nslopepre,Nb0pre,datespre,xpre,"blue",axs[0])
+        abline(Eslopepre,Eb0pre,datespre,xpre,"darkviolet",axs[1])
 
 
     axs[0].plot(xpost, np.polyval(p1, daycount[split:]), color = 'blue', label='regression', linestyle = "--")
@@ -197,7 +229,7 @@ def timeseries(filename, mode="show"):
        # #ax2.plot(NElin[0],NElin[1],fitFunc(NElin,fitpoly[0][0],fitpoly[0][1],fitpoly[0][2],fitpoly[0][3],fitpoly[0][4],fitpoly[0][5],fitpoly[0][6],
        #                                    fitpoly[0][7],fitpoly[0][8],fitpoly[0][9]))
        ax2 = plt.axes(projection='3d')
-       extrapolate =np.arange(daycount[-1],2200,1)
+       extrapolate =np.arange(daycount[-1],2250,1)
        extradays = np.concatenate((daycount[split:],extrapolate), axis=None)
        ax2.plot(extradays,np.polyval(p1,extradays),np.polyval(p2,extradays),color = 'darkviolet',label ='regeression',linestyle = '--' ,linewidth =0.5)
        ax2.scatter(indexeddates,Df['N'], Df['E'],  cmap='viridis', linewidth=0.1);
@@ -205,21 +237,22 @@ def timeseries(filename, mode="show"):
        ax2.set_zlabel('East [mm]')
        ax2.set_xlabel('Days')
        plt.show()
-     
+
     if mode == "save":
         stat = filename[0:4] + ".png"# first four characters of the filename string
         print(stat)
-        loc  = r"C:\Users\Mees de Graaf\Documents\Tu delft\project test analysis\plots\timeseries"
+        loc  = r"C:\Users\JdeBo\Desktop\Q4 2019-2020\2020-Q3-project\timeseries"
         plt.savefig(os.path.join(loc, stat))
+        plt.close(fig)
 
 # # execute this to see a specific station
-file = r"PHKT.txt"
-timeseries(file)
+# file = r"PHKT.txt"
+# timeseries(file)
 
 # execute this when you want all timeseries
 files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
-#for f in files:
-    #timeseries(f, mode="show")                  #Mode to save or see plots
+for f in files:
+    timeseries(f, mode="save")                  #Mode to save or see plots
 
