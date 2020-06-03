@@ -4,8 +4,15 @@ data points from before the 2004 earthquake and one green using data points post
 To plot linear regression from a different file change the file name
 Note the x-axis numbers show the days counted from the first date in the file"""
 
+"""This Script plots data points in from  files converted by adam
+It will also plot three different linear regressions one red line over the complete data one line pink using
+data points from before the 2004 earthquake and one green using data points post earthquake
+To plot linear regression from a different file change the file name
+Note the x-axis numbers show the days counted from the first date in the file"""
+
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import style
 from sklearn.linear_model import LinearRegression
 import datetime as dt
@@ -27,7 +34,7 @@ def abline(slope, intercept, indexdates, datetimedates,color,ax):
     y_vals = intercept + slope * indexdates
     ax.plot(datetimedates, y_vals, '--',color = color)
 
-directory = r'C:\Users\Mees de Graaf\Documents\Tu delft\project test analysis\NEU_picklefiles'
+directory = r'C:\Users\JdeBo\Desktop\Q4 2019-2020\2020-Q3-project\NEU'
 
 def timeseries(filename, mode="show"):
     """Generate plots from a pickle file, mode is either save to write to disk or default show to see a specific time series"""
@@ -93,14 +100,14 @@ def timeseries(filename, mode="show"):
 
 
     # Linear regression assuming discontinuity
-    datespre   = indexeddates[0:split+1]
-    datespost  = indexeddates[split+1:]
+    datespre   = indexeddates[0:split]
+    datespost  = indexeddates[split:]
 
 
-    Npre       = N[0:split+1]
-    Npost      = N[split+1:]
-    Epre       = E[0:split+1]
-    Epost      = E[split+1:]
+    Npre       = N[0:split]
+    Npost      = N[split:]
+    Epre       = E[0:split]
+    Epost      = E[split:]
 
 
     Nmodelpre   = LinearRegression().fit(datespre,Npre)
@@ -119,8 +126,8 @@ def timeseries(filename, mode="show"):
     #polynomial interpolation
     Npost = np.array(Npost)
     Epost = np.array(Epost)
-    p1 = np.polyfit(daycount[split+1:], Npost, 10)
-    p2 = np.polyfit(daycount[split+1:], Epost, 10)
+    p1 = np.polyfit(daycount[split:], Npost, 10)
+    p2 = np.polyfit(daycount[split:], Epost, 10)
 
     #interger to datetime coverting
     xpre =[]
@@ -165,11 +172,25 @@ def timeseries(filename, mode="show"):
     abline(Eslopepre,Eb0pre,datespre,xpre,"darkviolet",axs[1])
 
 
-    axs[0].plot(xpost, np.polyval(p1, daycount[split+1:]), color = 'blue', label='regression', linestyle = "--")
-    axs[1].plot(xpost, np.polyval(p2, daycount[split+1:]), color = 'darkviolet', label='regression', linestyle = "--")
+    axs[0].plot(xpost, np.polyval(p1, daycount[split:]), color = 'blue', label='regression', linestyle = "--")
+    axs[1].plot(xpost, np.polyval(p2, daycount[split:]), color = 'darkviolet', label='regression', linestyle = "--")
+
+
+
+
+
 
     if mode == "show":
-        plt.show()
+       plt.show()
+       #np.polyfit(daycount,[Npost,Epost])
+       ax2 = plt.axes(projection='3d')
+       ax2.scatter(Df['N'], Df['E'],indexeddates,  cmap='viridis', linewidth=0.5);
+       #ax2.scatter(Npre, Epre, datespre, cmap='viridis', linewidth=0.5);
+       ax2.set_xlabel('North [mm]')
+       ax2.set_ylabel('East [mm]')
+       ax2.set_zlabel('Days')
+       plt.show()
+
     if mode == "save":
         stat = filename[0:4] + ".png"# first four characters of the filename string
         print(stat)
@@ -183,5 +204,9 @@ def timeseries(filename, mode="show"):
 # execute this when you want all timeseries
 files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
+
 for f in files:
-    timeseries(f, mode="save")
+    timeseries(f, mode="save")                  #Mode to save or see plots
+
+# phkt = files.index("PHKT.txt")
+# timeseries(files[phkt],mode = 'show')
