@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import style
 from sklearn.linear_model import LinearRegression
+from scipy.optimize import curve_fit
 import datetime as dt
 import matplotlib.dates as mdates
 import pandas as pd
@@ -72,7 +73,7 @@ def timeseries(filename, mode="show"):
     #Choosing the date to split the data On due to assumed discontinuity at earthquake
     Data_quake = dt.datetime(2004,12,26) in dateslist
     if Data_quake:
-        split = dateslist.index(dt.datetime(2004,12,26)) + 1                          #+1 as to include 26 in pre earthquake
+        split = dateslist.index(dt.datetime(2004,12,26))                          #+1 as to include 26 in pre earthquake
         print ('date of earth quake is included')
     else:
         i = 0
@@ -180,17 +181,31 @@ def timeseries(filename, mode="show"):
 
 
 
+
     if mode == "show":
        plt.show()
-       #np.polyfit(daycount,[Npost,Epost])
+      #multivariate polynomial fit
+       # def fitFunc(NE,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9):
+       #    return (a0 +a1*NE[0]+a2*NE[1]+a3*NE[0]*NE[0] + a4*NE[1]*NE[1] + a5*NE[0]*NE[1] + a6*NE[0]*NE[0]*NE[0]
+       #      +a7*NE[1]*NE[0]*NE[0]+a8*NE[1]*NE[1]*NE[0]+a9*NE[1]*NE[1]*NE[1])
+       # NE = np.array([Npost,Epost])
+       # print(np.shape(NE),NE.dtype)
+       # print(np.shape(datespost),datespost.dtype)
+       # fitpoly = curve_fit(fitFunc,NE, np.array(datespost).flatten())
+       # NElin = np.array([np.linspace(-0.5,-0.1,1000),np.linspace(-0.3,-0.1,1000)])
+       # print(fitpoly[0])
+       # #ax2.plot(NElin[0],NElin[1],fitFunc(NElin,fitpoly[0][0],fitpoly[0][1],fitpoly[0][2],fitpoly[0][3],fitpoly[0][4],fitpoly[0][5],fitpoly[0][6],
+       #                                    fitpoly[0][7],fitpoly[0][8],fitpoly[0][9]))
        ax2 = plt.axes(projection='3d')
-       ax2.scatter(Df['N'], Df['E'],indexeddates,  cmap='viridis', linewidth=0.5);
-       #ax2.scatter(Npre, Epre, datespre, cmap='viridis', linewidth=0.5);
-       ax2.set_xlabel('North [mm]')
-       ax2.set_ylabel('East [mm]')
-       ax2.set_zlabel('Days')
+       extrapolate =np.arange(daycount[-1],2200,1)
+       extradays = np.concatenate((daycount[split:],extrapolate), axis=None)
+       ax2.plot(extradays,np.polyval(p1,extradays),np.polyval(p2,extradays),color = 'darkviolet',label ='regeression',linestyle = '--' ,linewidth =0.5)
+       ax2.scatter(indexeddates,Df['N'], Df['E'],  cmap='viridis', linewidth=0.1);
+       ax2.set_ylabel('North [mm]')
+       ax2.set_zlabel('East [mm]')
+       ax2.set_xlabel('Days')
        plt.show()
-
+     
     if mode == "save":
         stat = filename[0:4] + ".png"# first four characters of the filename string
         print(stat)
@@ -198,15 +213,13 @@ def timeseries(filename, mode="show"):
         plt.savefig(os.path.join(loc, stat))
 
 # # execute this to see a specific station
-# file = r"PHKT.txt"
-# timeseries(file)
+file = r"PHKT.txt"
+timeseries(file)
 
 # execute this when you want all timeseries
 files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
-for f in files:
-    timeseries(f, mode="save")                  #Mode to save or see plots
+#for f in files:
+    #timeseries(f, mode="show")                  #Mode to save or see plots
 
-# phkt = files.index("PHKT.txt")
-# timeseries(files[phkt],mode = 'show')
