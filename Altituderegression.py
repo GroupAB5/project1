@@ -15,6 +15,8 @@ import matplotlib.dates as mdates
 import pandas as pd
 import pickle
 import os
+import warnings
+
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -106,10 +108,20 @@ def timeseries(filename, mode="show"):
 
 
     #polynomial regression
+    warnings.filterwarnings("error")                            #allows to catch warning poorly conditioned fits
     Npost = np.array(Npost)
     Epost = np.array(Epost)
-    p1 = np.polyfit(daycount[split:], Npost, 10)
-    p2 = np.polyfit(daycount[split:], Epost, 10)
+    try:
+        p1 = np.polyfit(daycount[split:], Npost, 10)
+        p2 = np.polyfit(daycount[split:], Epost, 10)
+        illfitted = False
+    except:
+        warnings.filterwarnings('ignore')
+        #adding an astrix for ill conditioned fits
+        p1 = np.polyfit(daycount[split:], Npost, 10)
+        p2 = np.polyfit(daycount[split:], Epost, 10)
+        illfitted =True
+
 
     #derivatives
     dNddate = np.polyder(p1)
@@ -239,7 +251,10 @@ def timeseries(filename, mode="show"):
        plt.show()
 
     if mode == "save":
-        stat = filename[0:4] + ".png"# first four characters of the filename string
+        if illfitted :
+            stat = filename[0:4] +'-illfit.png' # first four characters of the filename string
+        else:
+            stat = filename[0:4] + ".png"# first four characters of the filename string
         print(stat)
         loc  = r"C:\Users\JdeBo\Desktop\Q4 2019-2020\2020-Q3-project\timeseries"
         plt.savefig(os.path.join(loc, stat))
