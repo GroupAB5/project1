@@ -7,6 +7,7 @@ import statsmodels.api as sm
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 from Altituderegression import timeseries
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 #Loading Required Station
 file = r"KTPK.txt"
@@ -23,6 +24,7 @@ y = Df
 # The 'MS' string groups the data in buckets by start of the month
 y = y['N'].resample('MS').mean()
 print(y)
+
 # The term bfill means that we use the value before filling in missing values
 y = y.fillna(y.bfill())
 
@@ -30,6 +32,19 @@ y = y.fillna(y.bfill())
 y.plot(figsize=(15, 6))
 plt.show()
 
+#First Parameter Selection Method
+#Differenciating the data
+diff1 = y.diff().fillna(y)
+diff2 = diff1.diff().fillna(diff1)
+
+#Plot ACF (anything outside the shaded banded is stat. significant any line outside helps determine the number of moving average values)
+plot_acf(diff2)
+plt.show()
+
+#Plot PACF (anything outside the band is useful to determine the number of autoregressive terms)
+plot_pacf(diff2)
+plt.show()
+#SARMIAX values are ARIMA(p,d,q) with p = autoregressive terms, d = differenciating terms, q = moving average terms
 
 #Definition for Parameter Selection for ARIMA model
 def Par_sel(y):
@@ -63,7 +78,7 @@ def Par_sel(y):
 
 #Fitting an ARIMAX Time-series model
 mod = sm.tsa.statespace.SARIMAX(y,
-                                order=(1, 3, 0),
+                                order=(2, 3, 4),
                                 seasonal_order=(0, 0, 0, 12),
                                 enforce_stationarity=False,
                                 enforce_invertibility=False)
